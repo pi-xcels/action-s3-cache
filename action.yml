@@ -150,7 +150,6 @@ runs:
         echo "==== FINAL SUMMARY ===="
         echo "S3 Host: ${{ steps.decide-s3.outputs.s3-host }}"
         echo "S3 Port: ${{ steps.decide-s3.outputs.s3-port }}"
-        echo "S3 Insecure: ${{ steps.decide-s3.outputs.s3-insecure }}"
         echo "Cache Hit: ${{ steps.check-cache.outputs.cache-hit }}"
         echo "Cache Size: ${{ steps.check-cache.outputs.cache-size }}"
         echo "========================"
