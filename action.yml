@@ -1,0 +1,156 @@
+name: "s3 Cache"
+description: "Use internal S3 bucket Cache for restore or save with pre-check"
+
+inputs:
+  netbird-connected:
+    description: "Whether Netbird is connected"
+    required: false
+    default: ""
+  s3-host-netbird:
+    description: "S3 host when Netbird is connected"
+    required: false
+    default: ""
+  s3-host-public:
+    description: "Public S3 host"
+    required: false
+    default: ""
+  s3-access-key:
+    description: "S3 Access Key"
+    required: false
+  s3-secret-key:
+    description: "S3 Secret Key"
+    required: false
+  s3-bucket:
+    description: "S3 Bucket"
+    required: false
+  s3-region:
+    description: "S3 Region"
+    required: false
+    default: ""
+  cache-key:
+    description: "Primary cache key for save/restore"
+    required: true
+  restore-keys:
+    description: "Additional restore keys"
+    required: false
+    default: ""
+  cache-path:
+    description: "Path to cache"
+    required: false
+  restore-lookup-only:
+    description: "Only check if cache exists without restoring or saving"
+    required: false
+    default: false
+
+outputs:
+  cache-hit:
+    description: "Cache hit (pre-check result)"
+    value: ${{ steps.check-cache.outputs.cache-hit }}
+  cache-size:
+    description: "Cache size (pre-check result)"
+    value: ${{ steps.check-cache.outputs.cache-size }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Debug Inputs
+      shell: bash
+      run: |
+        set -x
+        echo "==== INPUT VALUES ===="
+        echo "netbird-connected=${{ inputs.netbird-connected }}"
+        echo "s3-host-netbird=${{ inputs.s3-host-netbird }}"
+        echo "s3-host-public=${{ inputs.s3-host-public }}"
+        echo "s3-bucket=${{ inputs.s3-bucket }}"
+        echo "s3-region=${{ inputs.s3-region }}"
+        echo "cache-key=${{ inputs.cache-key }}"
+        echo "restore-keys=${{ inputs.restore-keys }}"
+        echo "cache-path=${{ inputs.cache-path }}"
+        echo "restore-lookup-only=${{ inputs.restore-lookup-only }}"
+        echo "======================"
+
+    - name: Set S3 Port and Protocol
+      id: decide-s3
+      shell: bash
+      run: |
+        set -x
+        if [ "${{ inputs.netbird-connected }}" = "true" ]; then
+          echo "s3-host=${{ inputs.s3-host-netbird }}" >> $GITHUB_OUTPUT
+          echo "s3-port=9000" >> $GITHUB_OUTPUT
+          echo "s3-insecure=true" >> $GITHUB_OUTPUT
+        else
+          echo "s3-host=${{ inputs.s3-host-public }}" >> $GITHUB_OUTPUT
+          echo "s3-port=443" >> $GITHUB_OUTPUT
+          echo "s3-insecure=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Pre-check cache (lookup only)
+      id: check-cache
+      uses: tespkg/actions-cache@v1
+      env:
+        AWS_REGION: ${{ inputs.s3-region }}
+        AWS_ACCESS_KEY_ID: ${{ inputs.s3-access-key }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.s3-secret-key }}
+      with:
+        endpoint: ${{ steps.decide-s3.outputs.s3-host }}
+        port: ${{ steps.decide-s3.outputs.s3-port }}
+        insecure: ${{ steps.decide-s3.outputs.s3-insecure }}
+        bucket: ${{ inputs.s3-bucket }}
+        key: ${{ inputs.cache-key }}
+        restore-keys: ${{ inputs.restore-keys }}
+        path: ${{ inputs.cache-path }}
+        use-fallback: false
+        lookup-only: true
+
+    - name: Debug Cache Lookup Output
+      shell: bash
+      run: |
+        set -x
+        echo "==== CACHE LOOKUP RESULT ===="
+        echo "cache-hit=${{ steps.check-cache.outputs.cache-hit }}"
+        echo "cache-size=${{ steps.check-cache.outputs.cache-size }}"
+        echo "============================="
+
+    - name: Restore Cache (if exists)
+      if: ${{ inputs.restore-lookup-only != 'true' && steps.check-cache.outputs.cache-hit == 'true' }}
+      uses: tespkg/actions-cache/restore@v1
+      env:
+        AWS_REGION: ${{ inputs.s3-region }}
+        AWS_ACCESS_KEY_ID: ${{ inputs.s3-access-key }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.s3-secret-key }}
+      with:
+        endpoint: ${{ steps.decide-s3.outputs.s3-host }}
+        port: ${{ steps.decide-s3.outputs.s3-port }}
+        insecure: ${{ steps.decide-s3.outputs.s3-insecure }}
+        bucket: ${{ inputs.s3-bucket }}
+        key: ${{ inputs.cache-key }}
+        restore-keys: ${{ inputs.restore-keys }}
+        path: ${{ inputs.cache-path }}
+        use-fallback: false
+
+    - name: Save Cache (if missing)
+      if: ${{ inputs.restore-lookup-only != 'true' && steps.check-cache.outputs.cache-hit != 'true' }}
+      uses: tespkg/actions-cache/save@v1
+      env:
+        AWS_REGION: ${{ inputs.s3-region }}
+        AWS_ACCESS_KEY_ID: ${{ inputs.s3-access-key }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.s3-secret-key }}
+      with:
+        endpoint: ${{ steps.decide-s3.outputs.s3-host }}
+        port: ${{ steps.decide-s3.outputs.s3-port }}
+        insecure: ${{ steps.decide-s3.outputs.s3-insecure }}
+        bucket: ${{ inputs.s3-bucket }}
+        key: ${{ inputs.cache-key }}
+        path: ${{ inputs.cache-path }}
+
+    - name: Final Debug Summary
+      shell: bash
+      run: |
+        set -x
+        echo "==== FINAL SUMMARY ===="
+        echo "S3 Host: ${{ steps.decide-s3.outputs.s3-host }}"
+        echo "S3 Port: ${{ steps.decide-s3.outputs.s3-port }}"
+        echo "S3 Insecure: ${{ steps.decide-s3.outputs.s3-insecure }}"
+        echo "Cache Hit: ${{ steps.check-cache.outputs.cache-hit }}"
+        echo "Cache Size: ${{ steps.check-cache.outputs.cache-size }}"
+        echo "========================"
