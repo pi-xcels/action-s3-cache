@@ -74,15 +74,9 @@ runs:
       shell: bash
       run: |
         set -x
-        if [ "${{ inputs.netbird-connected }}" = "true" ]; then
-          echo "s3-host=${{ inputs.s3-host-netbird }}" >> $GITHUB_OUTPUT
-          echo "s3-port=9000" >> $GITHUB_OUTPUT
-          echo "s3-insecure=true" >> $GITHUB_OUTPUT
-        else
-          echo "s3-host=${{ inputs.s3-host-public }}" >> $GITHUB_OUTPUT
-          echo "s3-port=443" >> $GITHUB_OUTPUT
-          echo "s3-insecure=false" >> $GITHUB_OUTPUT
-        fi
+        echo "s3-host=${{ inputs.s3-host-public }}" >> $GITHUB_OUTPUT
+        echo "s3-port=443" >> $GITHUB_OUTPUT
+        echo "s3-insecure=false" >> $GITHUB_OUTPUT
 
     - name: Pre-check cache (lookup only)
       id: check-cache
