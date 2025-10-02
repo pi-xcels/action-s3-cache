@@ -6,11 +6,7 @@ inputs:
     description: "Whether Netbird is connected"
     required: false
     default: ""
-  s3-host-netbird:
-    description: "S3 host when Netbird is connected"
-    required: false
-    default: ""
-  s3-host-public:
+  s3-host:
     description: "Public S3 host"
     required: false
     default: ""
@@ -59,8 +55,7 @@ runs:
         set -x
         echo "==== INPUT VALUES ===="
         echo "netbird-connected=${{ inputs.netbird-connected }}"
-        echo "s3-host-netbird=${{ inputs.s3-host-netbird }}"
-        echo "s3-host-public=${{ inputs.s3-host-public }}"
+        echo "s3-host=${{ inputs.s3-host }}"
         echo "s3-bucket=${{ inputs.s3-bucket }}"
         echo "s3-region=${{ inputs.s3-region }}"
         echo "cache-key=${{ inputs.cache-key }}"
@@ -74,7 +69,7 @@ runs:
       shell: bash
       run: |
         set -x
-        echo "s3-host=${{ inputs.s3-host-public }}" >> $GITHUB_OUTPUT
+        echo "s3-host=${{ inputs.s3-host }}" >> $GITHUB_OUTPUT
         echo "s3-port=443" >> $GITHUB_OUTPUT
         echo "s3-insecure=false" >> $GITHUB_OUTPUT
 
