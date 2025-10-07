@@ -2,10 +2,14 @@ name: "s3 Cache"
 description: "Use internal S3 bucket Cache for restore or save with pre-check"
 
 inputs:
+  netbird-connected:
+    description: "Whether Netbird is connected"
+    required: false
+    default: ""
   s3-host:
     description: "Public S3 host"
     required: false
-    default: ""
+    default: "s3.pi-xcels.com"
   s3-access-key:
     description: "S3 Access Key"
     required: false
@@ -18,7 +22,7 @@ inputs:
   s3-region:
     description: "S3 Region"
     required: false
-    default: ""
+    default: "us-east-1"
   cache-key:
     description: "Primary cache key for save/restore"
     required: true
@@ -51,9 +55,9 @@ runs:
         set -x
         echo "==== INPUT VALUES ===="
         echo "netbird-connected=${{ inputs.netbird-connected }}"
-        echo "s3-host=${{ inputs.s3-host }}"
+        echo "s3-host=s3.pi-xcels.com"
         echo "s3-bucket=${{ inputs.s3-bucket }}"
-        echo "s3-region=${{ inputs.s3-region }}"
+        echo "s3-region=us-east-1"
         echo "cache-key=${{ inputs.cache-key }}"
         echo "restore-keys=${{ inputs.restore-keys }}"
         echo "cache-path=${{ inputs.cache-path }}"
@@ -65,7 +69,7 @@ runs:
       shell: bash
       run: |
         set -x
-        echo "s3-host=${{ inputs.s3-host }}" >> $GITHUB_OUTPUT
+        echo "s3-host=s3.pi-xcels.com" >> $GITHUB_OUTPUT
         echo "s3-port=443" >> $GITHUB_OUTPUT
         echo "s3-insecure=false" >> $GITHUB_OUTPUT
 
@@ -73,13 +77,13 @@ runs:
       id: check-cache
       uses: tespkg/actions-cache@v1
       env:
-        AWS_REGION: ${{ inputs.s3-region }}
+        AWS_REGION: us-east-1
         AWS_ACCESS_KEY_ID: ${{ inputs.s3-access-key }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.s3-secret-key }}
       with:
-        endpoint: ${{ steps.decide-s3.outputs.s3-host }}
-        port: ${{ steps.decide-s3.outputs.s3-port }}
-        insecure: ${{ steps.decide-s3.outputs.s3-insecure }}
+        endpoint: s3.pi-xcels.com
+        port: 443
+        insecure: false
         bucket: ${{ inputs.s3-bucket }}
         key: ${{ inputs.cache-key }}
         restore-keys: ${{ inputs.restore-keys }}
@@ -100,13 +104,13 @@ runs:
       if: ${{ inputs.restore-lookup-only != 'true' && steps.check-cache.outputs.cache-hit == 'true' }}
       uses: tespkg/actions-cache/restore@v1
       env:
-        AWS_REGION: ${{ inputs.s3-region }}
+        AWS_REGION: us-east-1
         AWS_ACCESS_KEY_ID: ${{ inputs.s3-access-key }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.s3-secret-key }}
       with:
-        endpoint: ${{ steps.decide-s3.outputs.s3-host }}
-        port: ${{ steps.decide-s3.outputs.s3-port }}
-        insecure: ${{ steps.decide-s3.outputs.s3-insecure }}
+        endpoint: s3.pi-xcels.com
+        port: 443
+        insecure: false
         bucket: ${{ inputs.s3-bucket }}
         key: ${{ inputs.cache-key }}
         restore-keys: ${{ inputs.restore-keys }}
@@ -117,13 +121,13 @@ runs:
       if: ${{ inputs.restore-lookup-only != 'true' && steps.check-cache.outputs.cache-hit != 'true' }}
       uses: tespkg/actions-cache/save@v1
       env:
-        AWS_REGION: ${{ inputs.s3-region }}
+        AWS_REGION: us-east-1
         AWS_ACCESS_KEY_ID: ${{ inputs.s3-access-key }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.s3-secret-key }}
       with:
-        endpoint: ${{ steps.decide-s3.outputs.s3-host }}
-        port: ${{ steps.decide-s3.outputs.s3-port }}
-        insecure: ${{ steps.decide-s3.outputs.s3-insecure }}
+        endpoint: s3.pi-xcels.com
+        port: 443
+        insecure: false
         bucket: ${{ inputs.s3-bucket }}
         key: ${{ inputs.cache-key }}
         path: ${{ inputs.cache-path }}
@@ -133,8 +137,8 @@ runs:
       run: |
         set -x
         echo "==== FINAL SUMMARY ===="
-        echo "S3 Host: ${{ steps.decide-s3.outputs.s3-host }}"
-        echo "S3 Port: ${{ steps.decide-s3.outputs.s3-port }}"
+        echo "S3 Host: s3.pi-xcels.com"
+        echo "S3 Port: 443"
         echo "Cache Hit: ${{ steps.check-cache.outputs.cache-hit }}"
         echo "Cache Size: ${{ steps.check-cache.outputs.cache-size }}"
         echo "========================"
