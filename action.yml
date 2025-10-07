@@ -2,10 +2,6 @@ name: "s3 Cache"
 description: "Use internal S3 bucket Cache for restore or save with pre-check"
 
 inputs:
-  netbird-connected:
-    description: "Whether Netbird is connected"
-    required: false
-    default: ""
   s3-host:
     description: "Public S3 host"
     required: false
