@@ -71,7 +71,7 @@ runs:
         set -x
         echo "s3-host=${{ inputs.s3-host }}" >> $GITHUB_OUTPUT
         echo "s3-port=443" >> $GITHUB_OUTPUT
-        echo "s3-insecure=true" >> $GITHUB_OUTPUT
+        echo "s3-insecure=false" >> $GITHUB_OUTPUT
 
     - name: Pre-check cache (lookup only)
       id: check-cache
